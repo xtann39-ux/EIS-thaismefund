@@ -31,12 +31,6 @@
                             700: '#15803d',
                             800: '#166534',
                             900: '#14532d',
-                        },
-                        accent: {
-                            blue: '#2563eb',
-                            amber: '#d97706',
-                            purple: '#7c3aed',
-                            teal: '#0d9488'
                         }
                     }
                 }
@@ -45,10 +39,6 @@
     </script>
     <style>
         body { font-family: 'Kanit', sans-serif; }
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(8px);
-        }
         .tab-active {
             border-bottom: 3px solid #16a34a;
             color: #16a34a;
@@ -64,7 +54,7 @@
 
     <!-- Navigation Bar -->
     <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-50">
-        <div class="max-w-7xl mx-mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap justify-between items-center gap-4">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap justify-between items-center gap-4">
             <div class="flex items-center space-x-3">
                 <div class="p-2 bg-emerald-600 rounded-lg text-white">
                     <i class="fa-solid fa-chart-line text-xl"></i>
@@ -74,12 +64,31 @@
                     <p class="text-xs text-slate-300">โครงการขับเคลื่อนกองทุนพัฒนาเอสเอ็มอีตามแนวประชารัฐ ประจำจังหวัดอุดรธานี</p>
                 </div>
             </div>
-            <div class="flex items-center gap-2 no-print">
-                <button onclick="resetToDefaults()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs rounded-lg border border-slate-700 transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-rotate-left"></i> รีเซ็ตค่าเริ่มต้น (568 ล้านบาท)
+            
+            <div class="flex items-center gap-2 flex-wrap no-print">
+                <span id="save-status-badge" class="text-[11px] bg-slate-800 text-emerald-400 px-2.5 py-1 rounded-md border border-slate-700 flex items-center gap-1.5">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> บันทึกข้อมูลอัตโนมัติแล้ว
+                </span>
+                
+                <button onclick="saveData(true)" class="px-2.5 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white text-xs rounded-lg transition flex items-center gap-1" title="บันทึกข้อมูลลงเบราว์เซอร์ถาวร">
+                    <i class="fa-solid fa-floppy-disk"></i> บันทึก
                 </button>
+                
+                <button onclick="exportJSON()" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs rounded-lg border border-slate-700 transition flex items-center gap-1" title="ส่งออกไฟล์สำรอง JSON">
+                    <i class="fa-solid fa-download"></i> ส่งออก JSON
+                </button>
+
+                <button onclick="document.getElementById('import-file-input').click()" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs rounded-lg border border-slate-700 transition flex items-center gap-1" title="นำเข้าไฟล์สำรอง JSON">
+                    <i class="fa-solid fa-upload"></i> นำเข้า JSON
+                </button>
+                <input type="file" id="import-file-input" accept=".json" class="hidden" onchange="importJSON(event)">
+
+                <button onclick="promptResetToDefaults()" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 text-xs rounded-lg border border-slate-700 transition flex items-center gap-1" title="รีเซ็ตเป็นค่าเริ่มต้น">
+                    <i class="fa-solid fa-rotate-left"></i> รีเซ็ต
+                </button>
+                
                 <button onclick="window.print()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-lg shadow transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-print"></i> พิมพ์ / พิมพ์รายงาน PDF
+                    <i class="fa-solid fa-print"></i> พิมพ์ / PDF
                 </button>
             </div>
         </div>
@@ -93,10 +102,9 @@
             <!-- Total Approved Loan -->
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 relative overflow-hidden">
                 <div class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">วงเงินอนุมัติสินเจ้ารวม</div>
-                <div class="text-2xl font-extrabold text-slate-800" id="card-total-loan">43.90 <span class="text-sm font-normal text-slate-500">ลบ.</span></div>
+                <div class="text-2xl font-extrabold text-slate-800" id="card-total-loan">0.00 <span class="text-sm font-normal text-slate-500">ลบ.</span></div>
                 <div class="text-xs text-slate-500 mt-2 flex items-center gap-1">
-                    <span class="bg-blue-100 text-blue-700 font-semibold px-1.5 py-0.5 rounded text-[10px]">เสือติดปีก 38.9M</span>
-                    <span class="bg-amber-100 text-amber-700 font-semibold px-1.5 py-0.5 rounded text-[10px]">คงกระพัน 5.0M</span>
+                    <span class="bg-blue-100 text-blue-700 font-semibold px-1.5 py-0.5 rounded text-[10px]" id="card-companies-count">0 กิจการ</span>
                 </div>
                 <div class="absolute -right-2 -bottom-2 text-slate-100 text-5xl font-black pointer-events-none">
                     <i class="fa-solid fa-hand-holding-dollar"></i>
@@ -106,7 +114,7 @@
             <!-- Direct Effect -->
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 relative overflow-hidden">
                 <div class="text-xs font-semibold uppercase tracking-wider text-blue-600 mb-1">1. ผลกระทบทางตรง (Direct)</div>
-                <div class="text-2xl font-extrabold text-blue-700" id="card-direct-effect">56.73 <span class="text-sm font-normal text-slate-500">ลบ.</span></div>
+                <div class="text-2xl font-extrabold text-blue-700" id="card-direct-effect">0.00 <span class="text-sm font-normal text-slate-500">ลบ.</span></div>
                 <p class="text-[11px] text-slate-500 mt-1">เงินกู้ + เงินสมทบเอกชน ($V_{inv}$)</p>
                 <div class="absolute -right-2 -bottom-2 text-blue-50 text-5xl font-black pointer-events-none">
                     <i class="fa-solid fa-coins"></i>
@@ -116,7 +124,7 @@
             <!-- Indirect Effect -->
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 relative overflow-hidden">
                 <div class="text-xs font-semibold uppercase tracking-wider text-amber-600 mb-1">2. ผลกระทบทางอ้อม (Indirect)</div>
-                <div class="text-2xl font-extrabold text-amber-600" id="card-indirect-effect">87.35 <span class="text-sm font-normal text-slate-500">ลบ.</span></div>
+                <div class="text-2xl font-extrabold text-amber-600" id="card-indirect-effect">0.00 <span class="text-sm font-normal text-slate-500">ลบ.</span></div>
                 <p class="text-[11px] text-slate-500 mt-1">ห่วงโซ่อุปทานท้องถิ่น ($V_{supply}$)</p>
                 <div class="absolute -right-2 -bottom-2 text-amber-50 text-5xl font-black pointer-events-none">
                     <i class="fa-solid fa-truck-ramp-box"></i>
@@ -126,7 +134,7 @@
             <!-- Induced Effect -->
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 relative overflow-hidden">
                 <div class="text-xs font-semibold uppercase tracking-wider text-purple-600 mb-1">3. ใช้จ่ายต่อเนื่อง (Induced)</div>
-                <div class="text-2xl font-extrabold text-purple-700" id="card-induced-effect">423.93 <span class="text-sm font-normal text-slate-500">ลบ.</span></div>
+                <div class="text-2xl font-extrabold text-purple-700" id="card-induced-effect">0.00 <span class="text-sm font-normal text-slate-500">ลบ.</span></div>
                 <p class="text-[11px] text-slate-500 mt-1">ยอดขายสะสม + รายได้จ้างงาน</p>
                 <div class="absolute -right-2 -bottom-2 text-purple-50 text-5xl font-black pointer-events-none">
                     <i class="fa-solid fa-arrows-spin"></i>
@@ -136,10 +144,10 @@
             <!-- Total Economic Impact & Multiplier -->
             <div class="bg-emerald-800 text-white rounded-xl shadow-md p-4 relative overflow-hidden col-span-1 border border-emerald-700">
                 <div class="text-xs font-semibold uppercase tracking-wider text-emerald-200 mb-1">มูลค่าทางเศรษฐกิจรวม 10 ปี</div>
-                <div class="text-2xl font-black text-amber-300" id="card-total-impact">568.00 <span class="text-sm font-normal text-emerald-100">ลบ.</span></div>
+                <div class="text-2xl font-black text-amber-300" id="card-total-impact">0.00 <span class="text-sm font-normal text-emerald-100">ลบ.</span></div>
                 <div class="mt-1 pt-1 border-t border-emerald-700 flex justify-between items-center text-xs">
                     <span class="text-emerald-200">ตัวคูณทางเศรษฐกิจ:</span>
-                    <span class="font-extrabold text-white text-sm bg-emerald-900/80 px-2 py-0.5 rounded" id="card-multiplier">12.94 เท่า</span>
+                    <span class="font-extrabold text-white text-sm bg-emerald-900/80 px-2 py-0.5 rounded" id="card-multiplier">0.00 เท่า</span>
                 </div>
             </div>
         </div>
@@ -148,7 +156,7 @@
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 mb-6 no-print">
             <div class="flex border-b border-slate-200 overflow-x-auto text-sm font-medium">
                 <button onclick="switchTab('tab-inputs')" id="btn-tab-inputs" class="tab-btn px-6 py-3 text-slate-600 hover:text-emerald-600 flex items-center gap-2 whitespace-nowrap tab-active">
-                    <i class="fa-solid fa-pen-to-square"></i> 1. กรอกข้อมูล/ปรับพารามิเตอร์ 4 กิจการ
+                    <i class="fa-solid fa-pen-to-square"></i> 1. กรอกข้อมูล/ปรับพารามิเตอร์กิจการ
                 </button>
                 <button onclick="switchTab('tab-summary')" id="btn-tab-summary" class="tab-btn px-6 py-3 text-slate-600 hover:text-emerald-600 flex items-center gap-2 whitespace-nowrap">
                     <i class="fa-solid fa-table"></i> 2. ตารางโครงสร้างมูลค่า (สำหรับใส่บทที่ 4)
@@ -162,17 +170,27 @@
             </div>
         </div>
 
-        <!-- TAB CONTENT 1: INPUT DATA FOR 4 ENTERPRISES -->
+        <!-- TAB CONTENT 1: INPUT DATA FOR ENTERPRISES -->
         <div id="tab-inputs" class="tab-content block space-y-6">
-            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg text-sm text-blue-900 mb-4 flex justify-between items-center">
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg text-sm text-blue-900 flex justify-between items-center flex-wrap gap-3">
                 <div>
-                    <span class="font-bold"><i class="fa-solid fa-circle-info mr-1"></i> คำแนะนำ:</span> ท่านสามารถแก้ไข **ชื่อย่อกิจการ (Acronym)**, **ชื่อเต็ม**, **วงเงินอนุมัติ**, **ยอดขายส่วนเพิ่ม**, **การจ้างงาน** และ **สัดส่วนห่วงโซ่อุปทาน** ของแต่ละกิจการเพื่อคำนวณมูลค่าทางเศรษฐกิจสะสม 10 ปีได้แบบ Real-time
+                    <span class="font-bold"><i class="fa-solid fa-circle-info mr-1"></i> คำแนะนำ:</span> ท่านสามารถแก้ไข **ชื่อย่อกิจการ**, **ชื่อเต็ม**, **วงเงินอนุมัติ**, **ยอดขายส่วนเพิ่ม**, **การจ้างงาน** และ **สัดส่วนห่วงโซ่อุปทาน** ได้แบบ Real-time โดยข้อมูลจะ **ถูกบันทึกไว้อย่างถาวรไม่หายเมื่อปิดหน้าจอ**
                 </div>
+                <button onclick="addNewCompany()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs rounded-lg shadow transition flex items-center gap-1.5 whitespace-nowrap">
+                    <i class="fa-solid fa-plus-circle"></i> + เพิ่มกิจการใหม่
+                </button>
             </div>
 
-            <!-- Grid of 4 Companies Input Cards -->
+            <!-- Grid of Companies Input Cards -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" id="companies-input-container">
                 <!-- Dynamically populated via JS -->
+            </div>
+
+            <!-- Add Company Bottom Action Bar -->
+            <div class="flex justify-center pt-4">
+                <button onclick="addNewCompany()" class="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-emerald-400 font-semibold text-xs rounded-xl shadow border border-slate-700 transition flex items-center gap-2">
+                    <i class="fa-solid fa-plus text-sm"></i> เพิ่มกิจการประเมินใหม่ (+1 Enterprise)
+                </button>
             </div>
         </div>
 
@@ -181,7 +199,7 @@
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-4 border-b border-slate-200">
                     <div>
-                        <h3 class="font-bold text-lg text-slate-800">ตารางโครงสร้างมูลค่าทางเศรษฐกิจของ 4 กิจการในจังหวัดอุดรธานี</h3>
+                        <h3 class="font-bold text-lg text-slate-800">ตารางโครงสร้างมูลค่าทางเศรษฐกิจของกิจการในจังหวัดอุดรธานี</h3>
                         <p class="text-xs text-slate-500">ประเมินผลสัมฤทธิ์สะสม 10 ปี ตามกรอบสัญญาเงินกู้กองทุนพัฒนาเอสเอ็มอีตามแนวประชารัฐ</p>
                     </div>
                     <button onclick="copyTableToClipboard()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold rounded-lg shadow transition flex items-center gap-2">
@@ -215,7 +233,7 @@
                     </table>
                 </div>
 
-                <!-- Breakdown Explanation Cards below table -->
+                <!-- Breakdown Explanation Cards -->
                 <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
                     <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                         <span class="font-bold text-blue-900 block mb-1">Direct Effect (ผลกระทบทางตรง):</span>
@@ -239,7 +257,7 @@
                 <!-- Chart 1: Impact by Company -->
                 <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
                     <h4 class="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2">
-                        <i class="fa-solid fa-chart-bar text-emerald-600"></i> เปรียบเทียบมูลค่าทางเศรษฐกิจแยกตาม 4 กิจการ (ล้านบาท)
+                        <i class="fa-solid fa-chart-bar text-emerald-600"></i> เปรียบเทียบมูลค่าทางเศรษฐกิจแยกตามกิจการ (ล้านบาท)
                     </h4>
                     <div class="h-64 relative">
                         <canvas id="companyImpactChart"></canvas>
@@ -285,6 +303,33 @@
 
     </main>
 
+    <!-- Modal Confirmation Dialog (Replaces native alert/confirm) -->
+    <div id="custom-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4 border border-slate-200">
+            <div class="flex items-center gap-3">
+                <div id="modal-icon-container" class="p-3 bg-amber-100 text-amber-600 rounded-full">
+                    <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-800 text-base" id="modal-title">ยืนยันการทำรายการ</h3>
+                    <p class="text-xs text-slate-500" id="modal-message">คุณแน่ใจหรือไม่ว่าต้องการดำเนินการนี้?</p>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                <button onclick="closeModal(false)" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg">ยกเลิก</button>
+                <button id="modal-confirm-btn" onclick="closeModal(true)" class="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-medium rounded-lg">ยืนยัน</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast-notification" class="fixed bottom-5 right-5 z-50 transition-all duration-300 opacity-0 translate-y-4 pointer-events-none">
+        <div class="bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl border border-slate-700 flex items-center gap-3 text-xs">
+            <i class="fa-solid fa-circle-check text-emerald-400 text-base" id="toast-icon"></i>
+            <span id="toast-message">บันทึกข้อมูลสำเร็จ</span>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="bg-slate-900 text-slate-400 text-xs py-4 border-t border-slate-800 mt-auto no-print">
         <div class="max-w-7xl mx-auto px-4 text-center flex flex-col sm:flex-row justify-between items-center gap-2">
@@ -294,21 +339,23 @@
     </footer>
 
     <script>
-        // Default 4 Enterprises Preset Data (Adjusted for 10-Year Cumulative Economic Impact)
+        const STORAGE_KEY = 'EIA_UDON_ENTERPRISES_DATA_V2';
+
+        // Default 4 Enterprises Baseline Data
         const defaultCompanies = [
             {
                 id: 1,
                 acronym: "UD-AGR",
                 fullName: "บจก. อุดรเกษตรแปรรูปนวัตกรรม",
                 type: "เสือติดปีก",
-                loanAmount: 18.00, // ล้านบาท
-                coInvestPct: 30,  // %
-                annualSalesInc: 14.50, // ล้านบาท/ปี (สะสม 10 ปี = 145 ล้านบาท)
-                jobsCount: 30, // คน
-                avgMonthlyWage: 16000, // บาท/คน/เดือน
-                jobYearsEvaluated: 3, // ปี
-                supplyChainRatio: 25, // % ของยอดขายส่วนเพิ่ม
-                years: 10 // ปี
+                loanAmount: 18.00,
+                coInvestPct: 30,
+                annualSalesInc: 14.50,
+                jobsCount: 30,
+                avgMonthlyWage: 16000,
+                jobYearsEvaluated: 3,
+                supplyChainRatio: 25,
+                years: 10
             },
             {
                 id: 2,
@@ -317,7 +364,7 @@
                 type: "เสือติดปีก",
                 loanAmount: 12.00,
                 coInvestPct: 35,
-                annualSalesInc: 10.50, // สะสม 10 ปี = 105 ล้านบาท
+                annualSalesInc: 10.50,
                 jobsCount: 22,
                 avgMonthlyWage: 15000,
                 jobYearsEvaluated: 3,
@@ -331,7 +378,7 @@
                 type: "เสือติดปีก",
                 loanAmount: 8.90,
                 coInvestPct: 25,
-                annualSalesInc: 8.00, // สะสม 10 ปี = 80 ล้านบาท
+                annualSalesInc: 8.00,
                 jobsCount: 18,
                 avgMonthlyWage: 15000,
                 jobYearsEvaluated: 3,
@@ -345,7 +392,7 @@
                 type: "คงกระพัน",
                 loanAmount: 5.00,
                 coInvestPct: 20,
-                annualSalesInc: 5.00, // สะสม 10 ปี = 50 ล้านบาท
+                annualSalesInc: 5.00,
                 jobsCount: 10,
                 avgMonthlyWage: 14000,
                 jobYearsEvaluated: 3,
@@ -354,7 +401,8 @@
             }
         ];
 
-        let companiesData = JSON.parse(JSON.stringify(defaultCompanies));
+        let companiesData = [];
+        let modalCallback = null;
 
         // Chart Instances
         let companyImpactChartInstance = null;
@@ -363,35 +411,75 @@
 
         // On Page Load
         window.onload = function() {
+            loadSavedData();
             renderInputForms();
             calculateAndRefresh();
         };
 
+        function loadSavedData() {
+            try {
+                const localData = localStorage.getItem(STORAGE_KEY);
+                if (localData) {
+                    companiesData = JSON.parse(localData);
+                } else {
+                    companiesData = JSON.parse(JSON.stringify(defaultCompanies));
+                }
+            } catch (err) {
+                companiesData = JSON.parse(JSON.stringify(defaultCompanies));
+            }
+        }
+
+        function saveData(showNotification = false) {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(companiesData));
+                const badge = document.getElementById('save-status-badge');
+                if (badge) {
+                    badge.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> บันทึกข้อมูลเรียบร้อย`;
+                    badge.className = "text-[11px] bg-emerald-950 text-emerald-300 px-2.5 py-1 rounded-md border border-emerald-700 flex items-center gap-1.5";
+                }
+                if (showNotification) {
+                    showToast("บันทึกข้อมูลเรียบร้อยแล้ว (ไม่สูญหายเมื่อออกจากหน้าจอ)");
+                }
+            } catch (e) {
+                console.error('Failed to save to localStorage', e);
+            }
+        }
+
         function renderInputForms() {
             const container = document.getElementById('companies-input-container');
+            if (!container) return;
             container.innerHTML = '';
 
             companiesData.forEach((c, idx) => {
                 const cardHtml = `
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 relative">
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 relative transition hover:shadow-md">
                         <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
                             <div class="flex items-center gap-2">
                                 <span class="bg-emerald-700 text-white font-bold text-xs px-2.5 py-1 rounded-md">
                                     กิจการที่ ${idx + 1}
                                 </span>
-                                <input type="text" value="${c.acronym}" onchange="updateCompanyField(${idx}, 'acronym', this.value)" 
+                                <input type="text" value="${escapeHtml(c.acronym)}" onchange="updateCompanyField(${idx}, 'acronym', this.value)" 
                                     class="font-bold text-slate-800 text-base border-b border-dashed border-slate-400 focus:border-emerald-600 focus:outline-none w-28 px-1"
                                     title="แก้ไขชื่อย่อกิจการ">
                             </div>
-                            <span class="${c.type === 'เสือติดปีก' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'} text-xs font-semibold px-2 py-0.5 rounded">
-                                ${c.type}
-                            </span>
+                            <div class="flex items-center gap-2">
+                                <select onchange="updateCompanyField(${idx}, 'type', this.value)" class="text-xs font-semibold px-2 py-1 rounded border border-slate-300 focus:outline-none bg-slate-50">
+                                    <option value="เสือติดปีก" ${c.type === 'เสือติดปีก' ? 'selected' : ''}>เสือติดปีก</option>
+                                    <option value="คงกระพัน" ${c.type === 'คงกระพัน' ? 'selected' : ''}>คงกระพัน</option>
+                                    <option value="อื่นๆ" ${c.type === 'อื่นๆ' ? 'selected' : ''}>อื่นๆ</option>
+                                </select>
+                                ${companiesData.length > 1 ? `
+                                    <button onclick="promptDeleteCompany(${idx})" class="text-slate-400 hover:text-rose-600 text-xs p-1 rounded transition" title="ลบกิจการนี้">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
                         </div>
 
                         <!-- Full Name -->
                         <div class="mb-3">
                             <label class="block text-xs font-medium text-slate-500 mb-1">ชื่อเต็มกิจการ:</label>
-                            <input type="text" value="${c.fullName}" onchange="updateCompanyField(${idx}, 'fullName', this.value)"
+                            <input type="text" value="${escapeHtml(c.fullName)}" onchange="updateCompanyField(${idx}, 'fullName', this.value)"
                                 class="w-full text-xs font-medium border border-slate-300 rounded px-2 py-1.5 focus:border-emerald-500 focus:outline-none">
                         </div>
 
@@ -399,37 +487,37 @@
                         <div class="grid grid-cols-2 gap-3 text-xs">
                             <div>
                                 <label class="block font-medium text-slate-600 mb-0.5">วงเงินอนุมัติ (ล้านบาท):</label>
-                                <input type="number" step="0.1" value="${c.loanAmount}" onchange="updateCompanyField(${idx}, 'loanAmount', parseFloat(this.value))"
+                                <input type="number" step="0.1" min="0" value="${c.loanAmount}" onchange="updateCompanyField(${idx}, 'loanAmount', parseFloat(this.value) || 0)"
                                     class="w-full border border-slate-300 rounded px-2 py-1 font-bold text-slate-800 focus:border-emerald-500">
                             </div>
 
                             <div>
                                 <label class="block font-medium text-slate-600 mb-0.5">เงินสมทบเอกชน (%):</label>
-                                <input type="number" step="1" value="${c.coInvestPct}" onchange="updateCompanyField(${idx}, 'coInvestPct', parseFloat(this.value))"
+                                <input type="number" step="1" min="0" value="${c.coInvestPct}" onchange="updateCompanyField(${idx}, 'coInvestPct', parseFloat(this.value) || 0)"
                                     class="w-full border border-slate-300 rounded px-2 py-1 focus:border-emerald-500">
                             </div>
 
                             <div>
                                 <label class="block font-medium text-slate-600 mb-0.5">ยอดขายส่วนเพิ่ม (ลบ./ปี):</label>
-                                <input type="number" step="0.5" value="${c.annualSalesInc}" onchange="updateCompanyField(${idx}, 'annualSalesInc', parseFloat(this.value))"
+                                <input type="number" step="0.1" min="0" value="${c.annualSalesInc}" onchange="updateCompanyField(${idx}, 'annualSalesInc', parseFloat(this.value) || 0)"
                                     class="w-full border border-slate-300 rounded px-2 py-1 font-bold text-emerald-700 focus:border-emerald-500">
                             </div>
 
                             <div>
                                 <label class="block font-medium text-slate-600 mb-0.5">ห่วงโซ่อุปทานท้องถิ่น (%):</label>
-                                <input type="number" step="1" value="${c.supplyChainRatio}" onchange="updateCompanyField(${idx}, 'supplyChainRatio', parseFloat(this.value))"
+                                <input type="number" step="1" min="0" value="${c.supplyChainRatio}" onchange="updateCompanyField(${idx}, 'supplyChainRatio', parseFloat(this.value) || 0)"
                                     class="w-full border border-slate-300 rounded px-2 py-1 focus:border-emerald-500">
                             </div>
 
                             <div>
                                 <label class="block font-medium text-slate-600 mb-0.5">สร้าง/รักษาการจ้างงาน (คน):</label>
-                                <input type="number" step="1" value="${c.jobsCount}" onchange="updateCompanyField(${idx}, 'jobsCount', parseInt(this.value))"
+                                <input type="number" step="1" min="0" value="${c.jobsCount}" onchange="updateCompanyField(${idx}, 'jobsCount', parseInt(this.value) || 0)"
                                     class="w-full border border-slate-300 rounded px-2 py-1 focus:border-emerald-500">
                             </div>
 
                             <div>
                                 <label class="block font-medium text-slate-600 mb-0.5">ค่าจ้างเฉลี่ย (บาท/คน/เดือน):</label>
-                                <input type="number" step="500" value="${c.avgMonthlyWage}" onchange="updateCompanyField(${idx}, 'avgMonthlyWage', parseFloat(this.value))"
+                                <input type="number" step="500" min="0" value="${c.avgMonthlyWage}" onchange="updateCompanyField(${idx}, 'avgMonthlyWage', parseFloat(this.value) || 0)"
                                     class="w-full border border-slate-300 rounded px-2 py-1 focus:border-emerald-500">
                             </div>
                         </div>
@@ -446,8 +534,11 @@
         }
 
         function updateCompanyField(idx, field, value) {
-            companiesData[idx][field] = value;
-            calculateAndRefresh();
+            if (companiesData[idx]) {
+                companiesData[idx][field] = value;
+                saveData();
+                calculateAndRefresh();
+            }
         }
 
         function calculateMetrics() {
@@ -458,24 +549,34 @@
             let totalInducedJobs = 0;
             let totalImpact = 0;
 
-            const companyResults = companiesData.map((c, idx) => {
+            const companyResults = companiesData.map((c) => {
+                const loanAmt = parseFloat(c.loanAmount) || 0;
+                const coInvest = parseFloat(c.coInvestPct) || 0;
+                const annualInc = parseFloat(c.annualSalesInc) || 0;
+                const jobs = parseInt(c.jobsCount) || 0;
+                const wage = parseFloat(c.avgMonthlyWage) || 0;
+                const jobYears = parseFloat(c.jobYearsEvaluated) || 3;
+                const scRatio = parseFloat(c.supplyChainRatio) || 0;
+                const evalYears = parseFloat(c.years) || 10;
+
                 // 1. Direct Effect (V_inv) = Loan + Private Co-investment
-                const directInv = c.loanAmount * (1 + (c.coInvestPct / 100));
+                const directInv = loanAmt * (1 + (coInvest / 100));
 
-                // 2. Induced Sales (Delta S_t over 5 years)
-                const cumulativeSales = c.annualSalesInc * c.years;
+                // 2. Induced Sales (Delta S_t over 10 years)
+                const cumulativeSales = annualInc * evalYears;
 
-                // 3. Induced Jobs Value (V_job) = Jobs * Avg Wage * 12 months * 3 years
-                const employmentVal = (c.jobsCount * c.avgMonthlyWage * 12 * c.jobYearsEvaluated) / 1000000; // ในหน่วยล้านบาท
+                // 3. Induced Jobs Value (V_job) = Jobs * Avg Wage * 12 months * 3 years (million THB)
+                const employmentVal = (jobs * wage * 12 * jobYears) / 1000000;
 
                 // 4. Indirect Supply Chain Linkage (V_supply) = Cumulative Sales * Supply Chain Ratio
-                const supplyChainVal = cumulativeSales * (c.supplyChainRatio / 100);
+                const supplyChainVal = cumulativeSales * (scRatio / 100);
 
                 // Total Company Economic Impact
                 const companyTotal = directInv + supplyChainVal + cumulativeSales + employmentVal;
+                const companyMultiplier = loanAmt > 0 ? (companyTotal / loanAmt) : 0;
 
                 // Aggregate Totals
-                totalLoan += c.loanAmount;
+                totalLoan += loanAmt;
                 totalDirect += directInv;
                 totalIndirect += supplyChainVal;
                 totalInducedSales += cumulativeSales;
@@ -483,20 +584,20 @@
                 totalImpact += companyTotal;
 
                 return {
-                    acronym: c.acronym,
-                    fullName: c.fullName,
-                    type: c.type,
-                    loanAmount: c.loanAmount,
+                    acronym: c.acronym || 'N/A',
+                    fullName: c.fullName || 'N/A',
+                    type: c.type || 'เสือติดปีก',
+                    loanAmount: loanAmt,
                     directInv: directInv,
                     supplyChainVal: supplyChainVal,
                     cumulativeSales: cumulativeSales,
                     employmentVal: employmentVal,
                     companyTotal: companyTotal,
-                    multiplier: companyTotal / c.loanAmount
+                    multiplier: companyMultiplier
                 };
             });
 
-            const overallMultiplier = totalImpact / totalLoan;
+            const overallMultiplier = totalLoan > 0 ? (totalImpact / totalLoan) : 0;
 
             return {
                 companyResults,
@@ -514,13 +615,14 @@
         function calculateAndRefresh() {
             const res = calculateMetrics();
 
-            // Update Top Cards
+            // Update Top Metric Cards
             document.getElementById('card-total-loan').innerHTML = `${res.totalLoan.toFixed(2)} <span class="text-sm font-normal text-slate-500">ลบ.</span>`;
             document.getElementById('card-direct-effect').innerHTML = `${res.totalDirect.toFixed(2)} <span class="text-sm font-normal text-slate-500">ลบ.</span>`;
             document.getElementById('card-indirect-effect').innerHTML = `${res.totalIndirect.toFixed(2)} <span class="text-sm font-normal text-slate-500">ลบ.</span>`;
             document.getElementById('card-induced-effect').innerHTML = `${res.totalInduced.toFixed(2)} <span class="text-sm font-normal text-slate-500">ลบ.</span>`;
             document.getElementById('card-total-impact').innerHTML = `${res.totalImpact.toFixed(2)} <span class="text-sm font-normal text-emerald-100">ลบ.</span>`;
             document.getElementById('card-multiplier').innerText = `${res.overallMultiplier.toFixed(2)} เท่า`;
+            document.getElementById('card-companies-count').innerText = `${companiesData.length} กิจการ`;
 
             // Update Company Card Mini Summaries
             res.companyResults.forEach((cr, idx) => {
@@ -542,13 +644,14 @@
 
         function updateSummaryTable(res) {
             const tbody = document.getElementById('table-body-companies');
+            if (!tbody) return;
             tbody.innerHTML = '';
 
             res.companyResults.forEach(cr => {
                 const row = `
                     <tr class="hover:bg-slate-50 text-center border-b border-slate-200">
                         <td class="border border-slate-300 px-3 py-2 font-bold text-slate-800 text-left">
-                            ${cr.acronym} <span class="text-[10px] text-slate-500 font-normal block">${cr.fullName}</span>
+                            ${escapeHtml(cr.acronym)} <span class="text-[10px] text-slate-500 font-normal block">${escapeHtml(cr.fullName)}</span>
                         </td>
                         <td class="border border-slate-300 px-3 py-2">${cr.loanAmount.toFixed(2)}</td>
                         <td class="border border-slate-300 px-3 py-2 text-blue-700 font-medium">${cr.directInv.toFixed(2)}</td>
@@ -564,39 +667,47 @@
 
             // Foot Row
             const tfoot = document.getElementById('table-foot-total');
-            tfoot.innerHTML = `
-                <td class="border border-slate-300 px-3 py-2.5 text-left font-bold">รวมทั้งสิ้น (4 กิจการ)</td>
-                <td class="border border-slate-300 px-3 py-2.5">${res.totalLoan.toFixed(2)}</td>
-                <td class="border border-slate-300 px-3 py-2.5">${res.totalDirect.toFixed(2)}</td>
-                <td class="border border-slate-300 px-3 py-2.5">${res.totalIndirect.toFixed(2)}</td>
-                <td class="border border-slate-300 px-3 py-2.5">${res.totalInducedSales.toFixed(2)}</td>
-                <td class="border border-slate-300 px-3 py-2.5">${res.totalInducedJobs.toFixed(2)}</td>
-                <td class="border border-slate-300 px-3 py-2.5 font-black text-amber-300 text-sm">${(res.totalImpact * 1000000).toLocaleString('th-TH', {maximumFractionDigits:0})} บาท</td>
-                <td class="border border-slate-300 px-3 py-2.5 text-amber-300 font-black">${res.overallMultiplier.toFixed(2)}x</td>
-            `;
+            if (tfoot) {
+                tfoot.innerHTML = `
+                    <td class="border border-slate-300 px-3 py-2.5 text-left font-bold">รวมทั้งสิ้น (${companiesData.length} กิจการ)</td>
+                    <td class="border border-slate-300 px-3 py-2.5">${res.totalLoan.toFixed(2)}</td>
+                    <td class="border border-slate-300 px-3 py-2.5">${res.totalDirect.toFixed(2)}</td>
+                    <td class="border border-slate-300 px-3 py-2.5">${res.totalIndirect.toFixed(2)}</td>
+                    <td class="border border-slate-300 px-3 py-2.5">${res.totalInducedSales.toFixed(2)}</td>
+                    <td class="border border-slate-300 px-3 py-2.5">${res.totalInducedJobs.toFixed(2)}</td>
+                    <td class="border border-slate-300 px-3 py-2.5 font-black text-amber-300 text-sm">${(res.totalImpact * 1000000).toLocaleString('th-TH', {maximumFractionDigits:0})} บาท</td>
+                    <td class="border border-slate-300 px-3 py-2.5 text-amber-300 font-black">${res.overallMultiplier.toFixed(2)}x</td>
+                `;
+            }
         }
 
         function updateAcademicText(res) {
             const container = document.getElementById('academic-text-container');
+            if (!container) return;
+
             const totalInMillions = res.totalImpact.toFixed(2);
             const totalInBathText = (res.totalImpact * 1000000).toLocaleString('th-TH', {maximumFractionDigits:0});
             
             let companyBreakdownText = res.companyResults.map(cr => 
-                `• **${cr.fullName} (${cr.acronym}):** ได้รับอนุมัติวงเงินสินเชื่อ ${cr.loanAmount.toFixed(2)} ล้านบาท ก่อให้เกิดมูลค่าการลงทุนทางตรง ${cr.directInv.toFixed(2)} ล้านบาท, มูลค่าเชื่อมโยงห่วงโซ่อุปทาน ${cr.supplyChainVal.toFixed(2)} ล้านบาท, ยอดขายส่วนเพิ่มสะสม 10 ปี ${cr.cumulativeSales.toFixed(2)} ล้านบาท และมูลค่าการจ้างงาน ${cr.employmentVal.toFixed(2)} ล้านบาท รวมมูลค่าทางเศรษฐกิจทั้งสิ้น **${cr.companyTotal.toFixed(2)} ล้านบาท** (ตัวคูณทางเศรษฐกิจ ${cr.multiplier.toFixed(2)} เท่า)`
-            ).join('<br>');
+                `• <strong>${escapeHtml(cr.fullName)} (${escapeHtml(cr.acronym)}):</strong> ได้รับอนุมัติวงเงินสินเชื่อ ${cr.loanAmount.toFixed(2)} ล้านบาท ก่อให้เกิดมูลค่าการลงทุนทางตรง ${cr.directInv.toFixed(2)} ล้านบาท, มูลค่าเชื่อมโยงห่วงโซ่อุปทาน ${cr.supplyChainVal.toFixed(2)} ล้านบาท, ยอดขายส่วนเพิ่มสะสม 10 ปี ${cr.cumulativeSales.toFixed(2)} ล้านบาท และมูลค่าการจ้างงาน ${cr.employmentVal.toFixed(2)} ล้านบาท รวมมูลค่าทางเศรษฐกิจทั้งสิ้น <strong>${cr.companyTotal.toFixed(2)} ล้านบาท</strong> (ตัวคูณทางเศรษฐกิจ ${cr.multiplier.toFixed(2)} เท่า)`
+            ).join('<br><br>');
+
+            const directPct = res.totalImpact > 0 ? ((res.totalDirect / res.totalImpact)*100).toFixed(2) : '0.00';
+            const indirectPct = res.totalImpact > 0 ? ((res.totalIndirect / res.totalImpact)*100).toFixed(2) : '0.00';
+            const inducedPct = res.totalImpact > 0 ? ((res.totalInduced / res.totalImpact)*100).toFixed(2) : '0.00';
 
             container.innerHTML = `
                 <p class="font-bold text-slate-900">4.X ผลกระทบทางเศรษฐกิจจากการดำเนินงานกองทุนพัฒนาเอสเอ็มอีตามแนวประชารัฐ ประจำจังหวัดอุดรธานี</p>
                 <p>
-                    จากการวิเคราะห์และประเมินผลสัมฤทธิ์ของโครงการสินเชื่อกองทุนพัฒนาเอสเอ็มอีตามแนวประชารัฐ ประจำจังหวัดอุดรธานี ใน 4 กิจการเป้าหมาย วงเงินอนุมัติรวม **${res.totalLoan.toFixed(2)} ล้านบาท** โดยประยุกต์ใช้ **ทฤษฎีตัวคูณทางเศรษฐกิจ (Economic Multiplier Theory)** และกรอบการประเมินของกระทรวงอุตสาหกรรม ครอบคลุมระยะเวลาประเมินผลสะสม 10 ปี ตามกรอบสัญญาเงินกู้ พบว่า สามารถสร้างโครงสร้างมูลค่าทางเศรษฐกิจรวมทั้งสิ้น **${totalInMillions} ล้านบาท** (หรือคิดเป็น **${totalInBathText} บาท**) ซึ่งคิดเป็นตัวคูณทางเศรษฐกิจ (Economic Multiplier) เท่ากับ **${res.overallMultiplier.toFixed(2)} เท่า** ของวงเงินสินเชื่อที่ได้รับการอนุมัติ
+                    จากการวิเคราะห์และประเมินผลสัมฤทธิ์ของโครงการสินเชื่อกองทุนพัฒนาเอสเอ็มอีตามแนวประชารัฐ ประจำจังหวัดอุดรธานี ในจำนวนรวม <strong>${companiesData.length} กิจการเป้าหมาย</strong> วงเงินอนุมัติรวม <strong>${res.totalLoan.toFixed(2)} ล้านบาท</strong> โดยประยุกต์ใช้ <strong>ทฤษฎีตัวคูณทางเศรษฐกิจ (Economic Multiplier Theory)</strong> และกรอบการประเมินของกระทรวงอุตสาหกรรม ครอบคลุมระยะเวลาประเมินผลสะสม 10 ปี ตามกรอบสัญญาเงินกู้ พบว่า สามารถสร้างโครงสร้างมูลค่าทางเศรษฐกิจรวมทั้งสิ้น <strong>${totalInMillions} ล้านบาท</strong> (หรือคิดเป็น <strong>${totalInBathText} บาท</strong>) ซึ่งคิดเป็นตัวคูณทางเศรษฐกิจ (Economic Multiplier) เท่ากับ <strong>${res.overallMultiplier.toFixed(2)} เท่า</strong> ของวงเงินสินเชื่อที่ได้รับการอนุมัติ
                 </p>
                 <p class="font-semibold text-slate-800">โครงสร้างมูลค่าทางเศรษฐกิจจำแนกตามองค์ประกอบ 3 ด้าน ประกอบด้วย:</p>
                 <ul class="list-disc pl-5 space-y-1.5">
-                    <li><strong>1) ผลกระทบทางตรง (Direct Effects - $V_{inv}$):</strong> มีมูลค่ารวม **${res.totalDirect.toFixed(2)} ล้านบาท** คิดเป็นร้อยละ ${((res.totalDirect / res.totalImpact)*100).toFixed(2)} ของมูลค่าทางเศรษฐกิจรวม เกิดจากเม็ดเงินสินเชื่อที่ได้รับอนุมัติร่วมกับเงินสมทบของผู้ประกอบการ (Private Co-Investment) นำไปใช้ในการจัดซื้อเครื่องจักร ปรับปรุงโรงงาน และเป็นเงินทุนหมุนเวียน</li>
-                    <li><strong>2) ผลกระทบทางอ้อม (Indirect Effects - $V_{supply}$):</strong> มีมูลค่ารวม **${res.totalIndirect.toFixed(2)} ล้านบาท** คิดเป็นร้อยละ ${((res.totalIndirect / res.totalImpact)*100).toFixed(2)} เกิดจากการเชื่อมโยงห่วงโซ่อุปทาน (Supply Chain Linkage) ในการจัดซื้อวัตถุดิบทางการเกษตร บรรจุภัณฑ์ และบริการขนส่งภายในท้องถิ่นจังหวัดอุดรธานี</li>
-                    <li><strong>3) ผลกระทบจากการใช้จ่ายต่อเนื่อง (Induced Effects):</strong> มีมูลค่ารวม **${res.totalInduced.toFixed(2)} ล้านบาท** คิดเป็นร้อยละ ${((res.totalInduced / res.totalImpact)*100).toFixed(2)} แบ่งเป็นยอดขาย/รายได้ส่วนเพิ่มสะสมตลอด 10 ปี ($\Delta S_t$) จำนวน **${res.totalInducedSales.toFixed(2)} ล้านบาท** และมูลค่าจากการรักษาและสร้างการจ้างงานใหม่ ($V_{job}$) จำนวน **${res.totalInducedJobs.toFixed(2)} ล้านบาท**</li>
+                    <li><strong>1) ผลกระทบทางตรง (Direct Effects - $V_{inv}$):</strong> มีมูลค่ารวม <strong>${res.totalDirect.toFixed(2)} ล้านบาท</strong> คิดเป็นร้อยละ ${directPct} ของมูลค่าทางเศรษฐกิจรวม เกิดจากเม็ดเงินสินเชื่อที่ได้รับอนุมัติร่วมกับเงินสมทบของผู้ประกอบการ (Private Co-Investment) นำไปใช้ในการจัดซื้อเครื่องจักร ปรับปรุงโรงงาน และเป็นเงินทุนหมุนเวียน</li>
+                    <li><strong>2) ผลกระทบทางอ้อม (Indirect Effects - $V_{supply}$):</strong> มีมูลค่ารวม <strong>${res.totalIndirect.toFixed(2)} ล้านบาท</strong> คิดเป็นร้อยละ ${indirectPct} เกิดจากการเชื่อมโยงห่วงโซ่อุปทาน (Supply Chain Linkage) ในการจัดซื้อวัตถุดิบทางการเกษตร บรรจุภัณฑ์ และบริการขนส่งภายในท้องถิ่นจังหวัดอุดรธานี</li>
+                    <li><strong>3) ผลกระทบจากการใช้จ่ายต่อเนื่อง (Induced Effects):</strong> มีมูลค่ารวม <strong>${res.totalInduced.toFixed(2)} ล้านบาท</strong> คิดเป็นร้อยละ ${inducedPct} แบ่งเป็นยอดขาย/รายได้ส่วนเพิ่มสะสมตลอด 10 ปี ($\Delta S_t$) จำนวน <strong>${res.totalInducedSales.toFixed(2)} ล้านบาท</strong> และมูลค่าจากการรักษาและสร้างการจ้างงานใหม่ ($V_{job}$) จำนวน <strong>${res.totalInducedJobs.toFixed(2)} ล้านบาท</strong></li>
                 </ul>
-                <p class="font-semibold text-slate-800 pt-2">การจำแนกผลกระทบทางเศรษฐกิจรายกิจการ (4 กิจการ):</p>
+                <p class="font-semibold text-slate-800 pt-2">การจำแนกผลกระทบทางเศรษฐกิจรายกิจการ (${companiesData.length} กิจการ):</p>
                 <div class="bg-white p-3 rounded border border-slate-300 text-xs leading-relaxed">
                     ${companyBreakdownText}
                 </div>
@@ -610,110 +721,207 @@
             const companyLabels = res.companyResults.map(c => c.acronym);
 
             // Chart 1: Company Impact Comparison
-            const ctx1 = document.getElementById('companyImpactChart').getContext('2d');
-            if (companyImpactChartInstance) companyImpactChartInstance.destroy();
-            
-            companyImpactChartInstance = new Chart(ctx1, {
-                type: 'bar',
-                data: {
-                    labels: companyLabels,
-                    datasets: [
-                        {
-                            label: 'ทางตรง (Direct)',
-                            data: res.companyResults.map(c => c.directInv),
-                            backgroundColor: '#2563eb'
-                        },
-                        {
-                            label: 'ทางอ้อม (Indirect)',
-                            data: res.companyResults.map(c => c.supplyChainVal),
-                            backgroundColor: '#d97706'
-                        },
-                        {
-                            label: 'ใช้จ่ายต่อเนื่อง (Induced)',
-                            data: res.companyResults.map(c => c.cumulativeSales + c.employmentVal),
-                            backgroundColor: '#7c3aed'
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: { stacked: true },
-                        y: { stacked: true, title: { display: true, text: 'ล้านบาท' } }
+            const ctx1 = document.getElementById('companyImpactChart');
+            if (ctx1) {
+                if (companyImpactChartInstance) companyImpactChartInstance.destroy();
+                
+                companyImpactChartInstance = new Chart(ctx1.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: companyLabels,
+                        datasets: [
+                            {
+                                label: 'ทางตรง (Direct)',
+                                data: res.companyResults.map(c => c.directInv),
+                                backgroundColor: '#2563eb'
+                            },
+                            {
+                                label: 'ทางอ้อม (Indirect)',
+                                data: res.companyResults.map(c => c.supplyChainVal),
+                                backgroundColor: '#d97706'
+                            },
+                            {
+                                label: 'ใช้จ่ายต่อเนื่อง (Induced)',
+                                data: res.companyResults.map(c => c.cumulativeSales + c.employmentVal),
+                                backgroundColor: '#7c3aed'
+                            }
+                        ]
                     },
-                    plugins: {
-                        legend: { position: 'bottom' }
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { stacked: true },
+                            y: { stacked: true, title: { display: true, text: 'ล้านบาท' } }
+                        },
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        }
                     }
-                }
-            });
+                });
+            }
 
             // Chart 2: Effects Donut Chart
-            const ctx2 = document.getElementById('effectsDonutChart').getContext('2d');
-            if (effectsDonutChartInstance) effectsDonutChartInstance.destroy();
+            const ctx2 = document.getElementById('effectsDonutChart');
+            if (ctx2) {
+                if (effectsDonutChartInstance) effectsDonutChartInstance.destroy();
 
-            effectsDonutChartInstance = new Chart(ctx2, {
-                type: 'doughnut',
-                data: {
-                    labels: ['ทางตรง (Direct Effects)', 'ทางอ้อม (Indirect Effects)', 'ใช้จ่ายต่อเนื่อง (Induced Effects)'],
-                    datasets: [{
-                        data: [
-                            res.totalDirect.toFixed(2),
-                            res.totalIndirect.toFixed(2),
-                            res.totalInduced.toFixed(2)
-                        ],
-                        backgroundColor: ['#2563eb', '#d97706', '#7c3aed']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom' }
+                effectsDonutChartInstance = new Chart(ctx2.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['ทางตรง (Direct Effects)', 'ทางอ้อม (Indirect Effects)', 'ใช้จ่ายต่อเนื่อง (Induced Effects)'],
+                        datasets: [{
+                            data: [
+                                res.totalDirect.toFixed(2),
+                                res.totalIndirect.toFixed(2),
+                                res.totalInduced.toFixed(2)
+                            ],
+                            backgroundColor: ['#2563eb', '#d97706', '#7c3aed']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        }
                     }
-                }
-            });
+                });
+            }
 
             // Chart 3: 10-Year Cumulative Trajectory
-            const ctx3 = document.getElementById('timelineChart').getContext('2d');
-            if (timelineChartInstance) timelineChartInstance.destroy();
+            const ctx3 = document.getElementById('timelineChart');
+            if (ctx3) {
+                if (timelineChartInstance) timelineChartInstance.destroy();
 
-            const yearlyData = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(yr => {
-                const yrDirect = res.totalDirect; // เกิดขึ้นปีที่ 1
-                const yrIndirect = (res.totalIndirect / 10) * yr;
-                const yrSales = (res.totalInducedSales / 10) * yr;
-                const yrJobs = (res.totalInducedJobs / 3) * Math.min(yr, 3);
-                return (yrDirect + yrIndirect + yrSales + yrJobs).toFixed(2);
-            });
+                const yearlyData = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(yr => {
+                    const yrDirect = res.totalDirect; // เกิดขึ้นเต็มจำนวนปีแรก
+                    const yrIndirect = (res.totalIndirect / 10) * yr;
+                    const yrSales = (res.totalInducedSales / 10) * yr;
+                    const yrJobs = (res.totalInducedJobs / 3) * Math.min(yr, 3);
+                    return parseFloat((yrDirect + yrIndirect + yrSales + yrJobs).toFixed(2));
+                });
 
-            timelineChartInstance = new Chart(ctx3, {
-                type: 'line',
-                data: {
-                    labels: ['ปีที่ 1', 'ปีที่ 2', 'ปีที่ 3', 'ปีที่ 4', 'ปีที่ 5', 'ปีที่ 6', 'ปีที่ 7', 'ปีที่ 8', 'ปีที่ 9', 'ปีที่ 10 (สิ้นสุดระยะเวลา)'],
-                    datasets: [{
-                        label: 'มูลค่าทางเศรษฐกิจสะสม (ล้านบาท)',
-                        data: yearlyData,
-                        borderColor: '#16a34a',
-                        backgroundColor: 'rgba(22, 163, 74, 0.1)',
-                        fill: true,
-                        tension: 0.3,
-                        pointRadius: 5,
-                        pointBackgroundColor: '#16a34a'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { title: { display: true, text: 'ล้านบาท' } }
+                timelineChartInstance = new Chart(ctx3.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: ['ปีที่ 1', 'ปีที่ 2', 'ปีที่ 3', 'ปีที่ 4', 'ปีที่ 5', 'ปีที่ 6', 'ปีที่ 7', 'ปีที่ 8', 'ปีที่ 9', 'ปีที่ 10'],
+                        datasets: [{
+                            label: 'มูลค่าทางเศรษฐกิจสะสม (ล้านบาท)',
+                            data: yearlyData,
+                            borderColor: '#16a34a',
+                            backgroundColor: 'rgba(22, 163, 74, 0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#16a34a'
+                        }]
                     },
-                    plugins: {
-                        legend: { position: 'bottom' }
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { title: { display: true, text: 'ล้านบาท' } }
+                        },
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        }
                     }
-                }
-            });
+                });
+            }
         }
 
+        function addNewCompany() {
+            const nextNum = companiesData.length + 1;
+            const newCompany = {
+                id: Date.now(),
+                acronym: `UD-NEW${nextNum}`,
+                fullName: `บจก. อุดรพัฒนาใหม่ ${nextNum}`,
+                type: "เสือติดปีก",
+                loanAmount: 5.00,
+                coInvestPct: 20,
+                annualSalesInc: 4.00,
+                jobsCount: 10,
+                avgMonthlyWage: 15000,
+                jobYearsEvaluated: 3,
+                supplyChainRatio: 20,
+                years: 10
+            };
+            companiesData.push(newCompany);
+            saveData(false);
+            renderInputForms();
+            calculateAndRefresh();
+            showToast(`เพิ่มกิจการที่ ${nextNum} เรียบร้อยแล้ว`);
+        }
+
+        function promptDeleteCompany(idx) {
+            const c = companiesData[idx];
+            showModal(
+                "ยืนยันการลบกิจการ",
+                `คุณต้องการลบกิจการ "${c.fullName || c.acronym}" ออกจากการประเมินหรือไม่?`,
+                () => {
+                    companiesData.splice(idx, 1);
+                    saveData(false);
+                    renderInputForms();
+                    calculateAndRefresh();
+                    showToast("ลบกิจการเรียบร้อยแล้ว");
+                }
+            );
+        }
+
+        function promptResetToDefaults() {
+            showModal(
+                "ยืนยันการรีเซ็ตข้อมูล",
+                "การรีเซ็ตจะคืนค่ากลับไปเป็น 4 กิจการมาตรฐาน (568 ล้านบาท) ข้อมูลปัจจุบันที่คีย์ไว้จะถูกเขียนทับ ต้องการดำเนินการหรือไม่?",
+                () => {
+                    companiesData = JSON.parse(JSON.stringify(defaultCompanies));
+                    saveData(false);
+                    renderInputForms();
+                    calculateAndRefresh();
+                    showToast("รีเซ็ตเป็นค่าเริ่มต้นเรียบร้อยแล้ว");
+                }
+            );
+        }
+
+        // Export data to JSON file
+        function exportJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(companiesData, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `EIA_Udon_Data_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast("ส่งออกไฟล์ JSON สำเร็จ");
+        }
+
+        // Import data from JSON file
+        function importJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (Array.isArray(imported) && imported.length > 0) {
+                        companiesData = imported;
+                        saveData(false);
+                        renderInputForms();
+                        calculateAndRefresh();
+                        showToast("นำเข้าข้อมูล JSON สำเร็จ");
+                    } else {
+                        showToast("รูปแบบไฟล์ JSON ไม่ถูกต้อง");
+                    }
+                } catch (err) {
+                    showToast("เกิดข้อผิดพลาดในการอ่านไฟล์ JSON");
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Reset file input
+        }
+
+        // Tab Switching
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('tab-active'));
@@ -722,40 +930,77 @@
             document.getElementById(`btn-${tabId}`).classList.add('tab-active');
         }
 
-        function resetToDefaults() {
-            companiesData = JSON.parse(JSON.stringify(defaultCompanies));
-            renderInputForms();
-            calculateAndRefresh();
-        }
-
+        // Clipboard Copy Helper
         function copyTableToClipboard() {
             const table = document.getElementById('academic-summary-table');
+            if (!table) return;
             let range = document.createRange();
             range.selectNode(table);
             window.getSelection().removeAllRanges();
             window.getSelection().addRange(range);
             try {
                 document.execCommand('copy');
-                alert('คัดลอกตารางไปยัง Clipboard เรียบร้อยแล้ว สามารถนำไป Paste ใน Microsoft Word ได้ทันที');
+                showToast('คัดลอกตารางไปยัง Clipboard เรียบร้อยแล้ว');
             } catch (err) {
-                alert('ไม่สามารถคัดลอกอัตโนมัติได้ กรุณาลากคลุมตารางแล้วกด Ctrl+C');
+                showToast('ไม่สามารถคัดลอกอัตโนมัติได้');
             }
             window.getSelection().removeAllRanges();
         }
 
         function copyAcademicText() {
             const textDiv = document.getElementById('academic-text-container');
+            if (!textDiv) return;
             let range = document.createRange();
             range.selectNode(textDiv);
             window.getSelection().removeAllRanges();
             window.getSelection().addRange(range);
             try {
                 document.execCommand('copy');
-                alert('คัดลอกเนื้อหาบทบรรยายสำหรับบทที่ 4 เรียบร้อยแล้ว');
+                showToast('คัดลอกบทบรรยายเรียบร้อยแล้ว');
             } catch (err) {
-                alert('ไม่สามารถคัดลอกอัตโนมัติได้ กรุณาลากคลุมข้อความแล้วกด Ctrl+C');
+                showToast('ไม่สามารถคัดลอกอัตโนมัติได้');
             }
             window.getSelection().removeAllRanges();
+        }
+
+        // Modal Helpers
+        function showModal(title, message, onConfirm) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-message').innerText = message;
+            modalCallback = onConfirm;
+            document.getElementById('custom-modal').classList.remove('hidden');
+        }
+
+        function closeModal(isConfirmed) {
+            document.getElementById('custom-modal').classList.add('hidden');
+            if (isConfirmed && typeof modalCallback === 'function') {
+                modalCallback();
+            }
+            modalCallback = null;
+        }
+
+        // Toast Helper
+        function showToast(message) {
+            const toast = document.getElementById('toast-notification');
+            const toastMsg = document.getElementById('toast-message');
+            if (!toast || !toastMsg) return;
+
+            toastMsg.innerText = message;
+            toast.classList.remove('opacity-0', 'translate-y-4', 'pointer-events-none');
+            
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-4', 'pointer-events-none');
+            }, 3000);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
         }
     </script>
 </body>
